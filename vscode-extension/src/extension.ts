@@ -1,99 +1,57 @@
-/*---------------------------------------------------------
- * Copyright (C) Microsoft Corporation. All rights reserved.
- *--------------------------------------------------------*/
-// import * as vscode from 'vscode';
-"use strict";
+// The module 'vscode' contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in your code below
+import * as vscode from 'vscode';
+import {BreakingChangeInfo} from './quickFix';
+import {updateDiagnostics} from './diagnostic'
 
-import path = require("path");
-import vscode = require("vscode");
-import TelemetryReporter from "vscode-extension-telemetry";
-import { DocumentSelector } from "vscode-languageclient";
-import { CodeActionsFeature } from "./features/CodeActions";
-import { Logger, LogLevel } from "./logging";
-import { SessionManager } from "./session";
-import Settings = require("./settings");
-import { PowerShellLanguageId } from "./utils";
-import { LanguageClientConsumer } from "./languageClientConsumer";
-import { getSrcVersion } from "./selectVersion";
-
-// The most reliable way to get the name and version of the current extension.
-// tslint:disable-next-line: no-var-requires
-const PackageJSON: any = require("../package.json");
-
-// the application insights key (also known as instrumentation key) used for telemetry.
-
-let logger: Logger;
-let sessionManager: SessionManager;
-let languageClientConsumers: LanguageClientConsumer[] = [];
-let commandRegistrations: vscode.Disposable[] = [];
-let telemetryReporter: TelemetryReporter;
-
-const documentSelector: DocumentSelector = [
-    { language: "powershell", scheme: "file" },
-    { language: "Powershell", scheme: "file" },
-    { language: "powershell", scheme: "untitled" },
-];
-
-export function activate(context: vscode.ExtensionContext): void {
-    console.debug('"azps-tools" is activating ...');
+// this method is called when your extension is activated
+// your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+	
+	// Use the console to output diagnostic information (console.log) and errors (console.error)
+	// This line of code will only be executed once when your extension is activated
+	console.log('Congratulations, your extension "demo-client" is now active!');
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
+	let disposable = vscode.commands.registerCommand('demo-client.helloWorld', () => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Hello World from demo_client!');
+	});
 
-    // Create the logger
-    logger = new Logger();
+	
 
-    // Set the log level
-    const extensionSettings = Settings.load();
-    logger.MinimumLogLevel = LogLevel[extensionSettings.developer.editorServicesLogLevel];
+	const collection = vscode.languages.createDiagnosticCollection('test');
+	if (vscode.window.activeTextEditor) {
+		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection);
+	}
 
-    sessionManager =
-        new SessionManager(
-            logger,
-            documentSelector,
-            PackageJSON.displayName,
-            PackageJSON.version,
-            telemetryReporter);
+	context.subscriptions.push(disposable);
 
-    // Register commands that do not require Language client
-    commandRegistrations = [
-        new CodeActionsFeature(logger),
-    ]
+	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(editor => {
+		if (editor) {
+			updateDiagnostics(editor.uri, collection);
+		}
+	}))
 
-    // Features and command registrations that require language client
-    languageClientConsumers = [
-    ];
+	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
+		if (editor) {
+			updateDiagnostics(editor.uri, collection);
+		}
+	}))
 
-    sessionManager.setLanguageClientConsumers(languageClientConsumers);
 
-    if (extensionSettings.startAutomatically) {
-        sessionManager.start();
-    }
-
-    let disposable = vscode.commands.registerCommand('azps-tools.selectVersion', async () => {
-        var sourceVersion = await getSrcVersion();
-        vscode.window.showInformationMessage(`Updating powershell scripts from '${sourceVersion}' to latest`);
-    });
-    
-    context.subscriptions.push(disposable);
-
-    console.log('Congratulations, your extension "azps-tools" is now active!');
+	let breakingChangeInfo = new BreakingChangeInfo();
+	context.subscriptions.push(
+		vscode.languages.registerCodeActionsProvider({ language: 'powershell' }, breakingChangeInfo , {
+			providedCodeActionKinds: BreakingChangeInfo.providedCodeActionKinds
+		})
+	);
 }
 
-export function deactivate(): void {
-    // Clean up all extension features
-    languageClientConsumers.forEach((languageClientConsumer) => {
-        languageClientConsumer.dispose();
-    });
+// this method is called when your extension is deactivated
+export function deactivate() {}
 
-    commandRegistrations.forEach((commandRegistration) => {
-        commandRegistration.dispose();
-    });
 
-    // Dispose of the current session
-    sessionManager.dispose();
-
-    // Dispose of the logger
-    logger.dispose();
-}
