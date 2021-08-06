@@ -13,7 +13,7 @@ import { Logger } from "./logging";
 import { PowershellProcess } from './powershell';
 
 const PackageJSON: any = require("../package.json");
-
+let powershell = new PowershellProcess();
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -70,7 +70,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const azVersion = "6.1.0";
 
 	//start a powershell process
-	let powershell = new PowershellProcess();
 	try {
 		powershell.start();
 		vscode.window.showInformationMessage("Start powershell successed!");
@@ -109,10 +108,11 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate(powershell : PowershellProcess) {
+export function deactivate() {
 	try {
 		powershell.stop();
 	}
+	catch{}
 }
 
 async function checkModule(powershell : PowershellProcess, log : Logger){
