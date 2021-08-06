@@ -10,43 +10,39 @@ import {
     getPlatformDetails, IPlatformDetails, IPowerShellExeDetails,
     OperatingSystem, PowerShellExeFinder } from "./platform";
 import { Logger } from "./logging";
+import { PowershellProcess } from './powershell';
 
 const PackageJSON: any = require("../package.json");
 
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "demo-client" is now active!');
 
+	//start the logger
+	let log;
+	log = new Logger();
 	let platformDetails = getPlatformDetails();
 	const osBitness = platformDetails.isOS64Bit ? "64-bit" : "32-bit";
     const procBitness = platformDetails.isProcess64Bit ? "64-bit" : "32-bit";
-
-	let log;
-	log = new Logger();
 	log.write(
 		`Visual Studio Code v${vscode.version} ${procBitness}`,
 		`${PackageJSON.displayName} Extension v${PackageJSON.version}`,
 		`Operating System: ${OperatingSystem[platformDetails.operatingSystem]} ${osBitness}`);
 	log.startNewLog('normal');
 
-
+	//check whether the powershell exists
 	var powershellExeFinder = new PowerShellExeFinder();
 	let powerShellExeDetails;
 	try {
-		
-
 		powerShellExeDetails = powershellExeFinder.getFirstAvailablePowerShellInstallation();
-
 	} catch (e) {
 		log.writeError(`Error occurred while searching for a PowerShell executable:\n${e}`);
 	}
-
-
 	if (!powerShellExeDetails) {
 		const message = "Unable to find PowerShell."
 			+ " Do you have PowerShell installed?"
@@ -64,41 +60,43 @@ export function activate(context: vscode.ExtensionContext) {
 		]);
 		return;
 	}
+	else
+	{
+		vscode.window.showInformationMessage("Have found powershell!");
+	}
 
-	var process = require("child_process");
-	let checkModuleCommand = "Get-Module Az.Tools.Migration -ListAvailable";
-	process.exec(`pwsh -command "${checkModuleCommand}"`,async function (error : any, stdout: string, stderr : string) {
-		if (!stdout){
-			try{
-				let installModuleCommand = "Install-Module az.tools.migration -Repository PSGallery -Force";
-				await process.exec(`pwsh -command "${installModuleCommand}"`);
-				vscode.window.showInformationMessage("Install success!");
-			}
-			catch(e){
-				vscode.window.showInformationMessage("Please install the migration module for youself!")
-			}
-			
-		}
-		else
-			vscode.window.showInformationMessage("The mechine has migration module!");
-	});
+	//select azureRmVersion and azVersion
+	const azureRmVersion = "6.13.1";
+	const azVersion = "6.1.0";
 
-
+	//start a powershell process
+	let powershell = new PowershellProcess();
+	try {
+		powershell.start();
+		vscode.window.showInformationMessage("Start powershell successed!");
+	}
+	catch(e) {
+		vscode.window.showErrorMessage("Can't start the powershell : " + e.message);
+	}
+	
+	//check for existence of module
+	if (!checkModule(powershell, log))
+		return;
 
 	const collection = vscode.languages.createDiagnosticCollection('test');
 	if (vscode.window.activeTextEditor) {
-		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection);
+		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection, powershell, azureRmVersion, azVersion);
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(editor => {
 		if (editor) {
-			updateDiagnostics(editor.uri, collection);
+			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
 		}
 	}))
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
 		if (editor) {
-			updateDiagnostics(editor.uri, collection);
+			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
 		}
 	}))
 
@@ -111,6 +109,28 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate(powershell : PowershellProcess) {
+	try {
+		powershell.stop();
+	}
+}
 
-
+async function checkModule(powershell : PowershellProcess, log : Logger){
+	//check whether the module exists
+	//if not exist : suggest installing the module
+	const moduleName = "Az.Tools.Migration";
+	powershell.getSystemModulePath();
+	if (!powershell.checkModuleExist(moduleName)){
+		log.writeAndShowErrorWithActions("You have to install Az.Tools.Migration firstly!", [
+			{
+				prompt: "Get Az.Tools.Migration",
+				action: async () => {
+					const getPSUri = vscode.Uri.parse("https://docs.microsoft.com/en-us/powershell/azure/quickstart-migrate-azurerm-to-az-automatically");
+					vscode.env.openExternal(getPSUri);
+				},
+			},
+		]);
+		return false;
+	}
+	return true;
+}
