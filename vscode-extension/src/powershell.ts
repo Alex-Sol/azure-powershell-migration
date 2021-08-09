@@ -23,13 +23,8 @@ export class PowershellProcess{
         //const command = `New-AzUpgradeModulePlan -FilePath "${filePath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json -depth 10`;
         const command = `New-AzUpgradeModulePlan -FilePath "${filePath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json`;
         let planResult;
-        try {
-            this.powershell.addCommand(command);
-            planResult = await this.powershell.invoke();
-        }
-        catch(e){
-            vscode.window.showInformationMessage("Node-Powershell Error: " + e.message);
-        }
+        this.powershell.addCommand(command);
+        planResult = await this.powershell.invoke();
         
         return planResult;
     }

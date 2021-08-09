@@ -14,29 +14,9 @@ export async function updateDiagnostics(
 	if (documentUri) {
 		let diagnostics : vscode.Diagnostic[] = [];
 			const planResult = await powershell.getUpgradePlan(documentUri.fsPath, azureRmVersion, azVersion);
-			if (planResult){
-				vscode.window.showInformationMessage("Node-Powershell Success!");
-				updateDiagnosticsMessage(planResult, diagnostics);
-				collection.set(documentUri, diagnostics);
-			}
-			else{
-				var process = require("child_process");
-				const command = `New-AzUpgradeModulePlan -FilePath "${documentUri.fsPath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json -depth 10`;
-				process.exec(`pwsh -command "${command}"`,function (error : any, stdout: string, stderr : string) {
-					if (error != null){
-						vscode.window.showInformationMessage("Process Error： " + error.message);
-						vscode.window.showInformationMessage("Diagnostic Error!");
-					}
-					else
-						vscode.window.showInformationMessage("Process Success!");
-					if (stdout != null)
-						updateDiagnosticsMessage(stdout, diagnostics);	
-					collection.set(documentUri, diagnostics);
-				});
-			}
-			
-			//console.log("Errot: " + e);
-			
+			vscode.window.showInformationMessage("Node-Powershell Success!");
+			updateDiagnosticsMessage(planResult, diagnostics);
+			collection.set(documentUri, diagnostics);	
 	} else {
 		collection.clear();
 	}
