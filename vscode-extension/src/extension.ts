@@ -81,8 +81,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	
 	//check for existence of module
-	if (!checkModule(powershell, log))
+	let moduleExistence = await checkModule(powershell, log);
+	if (!moduleExistence){
+		vscode.window.showInformationMessage('module exist error');
 		return;
+	}
+
 
 	const collection = vscode.languages.createDiagnosticCollection('test');
 	if (vscode.window.activeTextEditor) {
