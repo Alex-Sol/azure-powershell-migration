@@ -4,12 +4,13 @@ import * as vscode from 'vscode';
 import shell = require("node-powershell")
 import * as process from "process";
 import { homedir } from 'os';
+import path = require("path");
 import fs = require("fs");
 
 
 export class PowershellProcess{
     private powershell : shell;
-    private systemModulePath : string;
+    private systemModulePath : string[];
 
     public start() : void {
         this.powershell = new shell({
@@ -35,8 +36,13 @@ export class PowershellProcess{
 
     public checkModuleExist(moduleName : string){
         this.getSystemModulePath();
-        const modulePath = this.systemModulePath + moduleName;
-        return fs.existsSync(modulePath);
+
+        for (const moduleFolder of this.systemModulePath){
+            const modulePath = path.resolve(moduleFolder, moduleName);
+            if (fs.existsSync(modulePath))
+                return true;
+        }
+        return false;
     }
 
     public async installModule(moduleName : string){
@@ -50,9 +56,13 @@ export class PowershellProcess{
 
     public getSystemModulePath(){
         if (process.platform === "win32") {
-            this.systemModulePath = homedir() + "\\Documents\\PowerShell\\Modules\\";
+            //this.systemModulePath = homedir() + "\\Documents\\PowerShell\\Modules\\";
+            const PsModulePathes = process.env.PSMODULEPATH.split(";");
+            this.systemModulePath = PsModulePathes;
         } else if (process.platform === "darwin" || process.platform === "linux") {
-            this.systemModulePath = homedir() + "/.local/share/powershell/Modules: usr/local/share/powershell/Modules";
+            //this.systemModulePath.push(homedir() + "/.local/share/powershell/Modules: usr/local/share/powershell/Modules");
+            //TODO: Linux or MacOS
+            const PsModulePathes = process.env.PSMODULEPATH.split("");
         } 
         else
         {
