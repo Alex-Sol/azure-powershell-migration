@@ -90,13 +90,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(editor => {
-		if (editor) {
+		if (editor && editor.languageId == "powershell") {
 			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
 		}
 	}))
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
-		if (editor) {
+		if (editor && editor.languageId == "powershell") {
 			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
 		}
 	}))
