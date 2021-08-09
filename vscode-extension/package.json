@@ -18,10 +18,17 @@
 		"Azure"
 	],
 	"activationEvents": [
-		"onLanguage:powershell"
+		"onCommand:azps-tools.selectVersion"
 	],
 	"main": "./out/extension.js",
-	"contributes": {},
+	"contributes": {
+		"commands": [
+			{
+				"title": "Migrate Azure PowerShell Script",
+				"command": "azps-tools.selectVersion"
+			}
+		]
+	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
