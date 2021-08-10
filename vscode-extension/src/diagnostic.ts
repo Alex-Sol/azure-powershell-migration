@@ -16,6 +16,7 @@ export async function updateDiagnostics(
 			const planResult = await powershell.getUpgradePlan(documentUri.fsPath, azureRmVersion, azVersion);
 			vscode.window.showInformationMessage("Node-Powershell Success!");
 			updateDiagnosticsMessage(planResult, diagnostics);
+			vscode.window.showInformationMessage(`Diagnostics Number : ${diagnostics.length}  `);
 			collection.set(documentUri, diagnostics);	
 	} else {
 		collection.clear();
