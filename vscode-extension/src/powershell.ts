@@ -21,6 +21,10 @@ export class PowershellProcess{
     
     public async getUpgradePlan(filePath : string, azureRmVersion: string, azVersion : string){
         //const command = `New-AzUpgradeModulePlan -FilePath "${filePath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json -depth 10`;
+        if (this.powershell.invocationStateInfo == "Running"){
+            await this.restart();
+        }
+        
         const command = `New-AzUpgradeModulePlan -FilePath "${filePath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json`;
         let planResult;
         this.powershell.addCommand(command);
@@ -65,7 +69,14 @@ export class PowershellProcess{
         }
     }
 
-    public stop() : void {
-        this.powershell.dispose();
+    public async stop() : Promise<void> {
+        await this.powershell.dispose();
     }
+
+    public async restart() : Promise<void>{
+        process.kill(this.powershell.pid);
+        //await this.powershell.dispose();
+        await this.start();
+    }
+
 }
