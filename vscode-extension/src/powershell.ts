@@ -15,6 +15,7 @@ export class PowershellProcess{
     private systemModulePath : string[];
     private log: Logger;
 
+    //start a powershell process
     public start() : void {
         this.powershell = new shell({
             executionPolicy: 'Bypass',
@@ -22,9 +23,11 @@ export class PowershellProcess{
             });
     }
     
+    //exec the migration command and get the result
     public async getUpgradePlan(filePath : string, azureRmVersion: string, azVersion : string){
         //const command = `New-AzUpgradeModulePlan -FilePath "${filePath}" -FromAzureRmVersion "${azureRmVersion}" -ToAzVersion "${azVersion}" | ConvertTo-Json -depth 10`;
         if (this.powershell.invocationStateInfo == "Running"){
+            //the latter cancels the former powershell process
             await this.restart();
         }
         
@@ -36,6 +39,7 @@ export class PowershellProcess{
         return planResult;
     }
 
+    //check whether the module exists
     public checkModuleExist(moduleName : string){
         this.getSystemModulePath();
 
@@ -47,6 +51,7 @@ export class PowershellProcess{
         return false;
     }
 
+    //install the module automatically
     public async installModule(moduleName : string){
         const command = `Install-Module "${moduleName}" -Repository PSGallery -Force`;
         this.powershell.addCommand(command);
@@ -55,13 +60,13 @@ export class PowershellProcess{
         );
     }
     
-
+    //get the env path of ps-modules
     public getSystemModulePath(){
-        if (process.platform === "win32") {
+        if (process.platform === "win32") { //windows
             //this.systemModulePath = homedir() + "\\Documents\\PowerShell\\Modules\\";
             const PsModulePathes = process.env.PSMODULEPATH.split(";");
             this.systemModulePath = PsModulePathes;
-        } else if (process.platform === "darwin" || process.platform === "linux") {
+        } else if (process.platform === "darwin" || process.platform === "linux") { //Linux or MacOS
             //this.systemModulePath.push(homedir() + "/.local/share/powershell/Modules: usr/local/share/powershell/Modules");
             const PsModulePathes = process.env.PSMODULEPATH.split(":");
             this.systemModulePath = PsModulePathes;
@@ -72,10 +77,12 @@ export class PowershellProcess{
         }
     }
 
+    //stop the powershell process
     public async stop() : Promise<void> {
         await this.powershell.dispose();
     }
 
+    //restart the powershell process
     public async restart() : Promise<void>{
         process.kill(this.powershell.pid);
         //await this.powershell.dispose();

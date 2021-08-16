@@ -14,7 +14,6 @@ export const GET_DEPRE_INFO_COMMAND = 'getdepreInfo';
 
 export class BreakingChangeInfo implements vscode.CodeActionProvider {
 
-
 	constructor() { }
 
 	public static readonly providedCodeActionKinds = [

@@ -68,7 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		log.write("Have found powershell!");
 	}
 
-	//select azureRmVersion and azVersion
+	//select azureRmVersion and azVersion(hard code)
 	const azureRmVersion = "6.13.1";
 	const azVersion = "6.1.0";
 
@@ -86,24 +86,27 @@ export async function activate(context: vscode.ExtensionContext) {
 	if (moduleExistence)
 		log.write('The module exist!');
 
-
+	//build the diagnastic
 	const collection = vscode.languages.createDiagnosticCollection('test');
 	if (vscode.window.activeTextEditor) {
 		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection, powershell, azureRmVersion, azVersion, log);
 	}
 
+	//do the analysis when the file is opened
 	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(editor => {
 		if (editor && editor.languageId == "powershell") {
 			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion, log);
 		}
 	}))
 
+	//do the analysis when the file is saved
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
 		if (editor && editor.languageId == "powershell") {
 			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion, log);
 		}
 	}))
 
+	//quick fix action
 	let breakingChangeInfo = new BreakingChangeInfo();
 	context.subscriptions.push(
 		vscode.languages.registerCodeActionsProvider({ language: 'powershell' }, breakingChangeInfo , {
