@@ -21,11 +21,7 @@ get notified automatically about any future extension updates!
 
 ## Usage
 
-- Open Command Palette(<kbd>Ctrl+Shift+P</kbd>) to start migration.
-![command-palette](resources/readme/command-palette.png)
-
-- Select source version.
-![select-version](resources/readme/select-version.png)
+- Open a powershell file to activate the extension and start migration.
 
 - Quick Fix
 ![quick-fix](resources/readme/quick-fix.png)
