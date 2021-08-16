@@ -2,15 +2,18 @@
 // Licensed under the MIT License.
 import * as vscode from 'vscode';
 import shell = require("node-powershell")
+import { Logger } from "./logging";
 import * as process from "process";
 import { homedir } from 'os';
 import path = require("path");
 import fs = require("fs");
 
 
+
 export class PowershellProcess{
     private powershell : shell;
     private systemModulePath : string[];
+    private log: Logger;
 
     public start() : void {
         this.powershell = new shell({
@@ -48,7 +51,7 @@ export class PowershellProcess{
         const command = `Install-Module "${moduleName}" -Repository PSGallery -Force`;
         this.powershell.addCommand(command);
         await this.powershell.invoke().then(
-            () => {vscode.window.showInformationMessage(`Install "${moduleName}" successed`);}
+            () => {this.log.write(`Install "${moduleName}" successed`);}
         );
     }
     

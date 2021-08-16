@@ -23,6 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "demo-client" is now active!');
 	let disposable = vscode.commands.registerCommand('azps-tools.selectVersion', async () => {
+		//TODO: build one selection quickbox
     });
 
 	//start the logger
@@ -64,7 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	else
 	{
-		vscode.window.showInformationMessage("Have found powershell!");
+		log.write("Have found powershell!");
 	}
 
 	//select azureRmVersion and azVersion
@@ -74,34 +75,32 @@ export async function activate(context: vscode.ExtensionContext) {
 	//start a powershell process
 	try {
 		powershell.start();
-		vscode.window.showInformationMessage("Start powershell successed!");
+		log.write("Start powershell successed!");
 	}
 	catch(e) {
-		vscode.window.showErrorMessage("Can't start the powershell : " + e.message);
+		log.writeError("Can't start the powershell : " + e.message);
 	}
 	
 	//check for existence of module
 	let moduleExistence = await checkModule(powershell, log);
-	if (!moduleExistence){
-		vscode.window.showInformationMessage('module exist error');
-		return;
-	}
+	if (moduleExistence)
+		log.write('The module exist!');
 
 
 	const collection = vscode.languages.createDiagnosticCollection('test');
 	if (vscode.window.activeTextEditor) {
-		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection, powershell, azureRmVersion, azVersion);
+		updateDiagnostics(vscode.window.activeTextEditor.document.uri, collection, powershell, azureRmVersion, azVersion, log);
 	}
 
 	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(editor => {
 		if (editor && editor.languageId == "powershell") {
-			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
+			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion, log);
 		}
 	}))
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
 		if (editor && editor.languageId == "powershell") {
-			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion);
+			updateDiagnostics(editor.uri, collection, powershell, azureRmVersion, azVersion, log);
 		}
 	}))
 

@@ -3,28 +3,29 @@
 
 import * as vscode from 'vscode';
 import { PowershellProcess } from './powershell';
-
+import { Logger } from "./logging";
 
 export async function updateDiagnostics(
 	documentUri: vscode.Uri , 
 	collection: vscode.DiagnosticCollection, 
 	powershell : PowershellProcess,
 	azureRmVersion : string,
-	azVersion : string): Promise<void> {
+	azVersion : string,
+	log : Logger): Promise<void> {
 	if (documentUri) {
 		let diagnostics : vscode.Diagnostic[] = [];
 			const planResult = await powershell.getUpgradePlan(documentUri.fsPath, azureRmVersion, azVersion);
-			vscode.window.showInformationMessage("Node-Powershell Success!");
+			log.write(`Node-Powershell Success! -- ${documentUri.fsPath}`);
 			if (planResult)
-				updateDiagnosticsMessage(planResult, diagnostics);
-			vscode.window.showInformationMessage(`Diagnostics Number : ${diagnostics.length}  `);
+				updateDiagnosticsMessage(planResult, diagnostics, log);
+			log.write(`Diagnostics Number : ${diagnostics.length}  `);
 			collection.set(documentUri, diagnostics);	
 	} else {
 		collection.clear();
 	}
 }
 
-function updateDiagnosticsMessage(plansStr : string, diagnostics : vscode.Diagnostic[]){
+function updateDiagnosticsMessage(plansStr : string, diagnostics : vscode.Diagnostic[], log : Logger){
 	var plans = JSON.parse(plansStr).forEach((plan : any, index : any) => {
 		//console.log(plan);
 		let range = new vscode.Range(new vscode.Position(plan.SourceCommand.StartLine - 1, plan.SourceCommand.StartColumn - 1), 
