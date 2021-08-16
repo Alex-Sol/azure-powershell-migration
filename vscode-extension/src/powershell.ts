@@ -63,8 +63,8 @@ export class PowershellProcess{
             this.systemModulePath = PsModulePathes;
         } else if (process.platform === "darwin" || process.platform === "linux") {
             //this.systemModulePath.push(homedir() + "/.local/share/powershell/Modules: usr/local/share/powershell/Modules");
-            //TODO: Linux or MacOS
-            const PsModulePathes = process.env.PSMODULEPATH.split("");
+            const PsModulePathes = process.env.PSMODULEPATH.split(":");
+            this.systemModulePath = PsModulePathes;
         } 
         else
         {
