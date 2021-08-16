@@ -75,7 +75,7 @@ export class PowershellProcess{
         } 
         else
         {
-            console.log("Unsupported operating system")!
+            console.log("Unsupported operating system!");
         }
     }
 
