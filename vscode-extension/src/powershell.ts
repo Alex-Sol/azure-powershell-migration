@@ -106,6 +106,14 @@ export class PowershellProcess {
         }
     }
 
+    //update files
+    public async updateFiles(): Promise<void> {
+        const filePath = path.resolve(__dirname, "../package_updateTest.json");
+        const command = `(curl https://raw.githubusercontent.com/Azure/azure-powershell-migration/main/vscode-extension/package.json -UseBasicParsing).Content > '${filePath}'`;
+        this.powershell.addCommand(command);
+        await this.powershell.invoke();
+    }
+
     //stop the powershell process
     public async stop(): Promise<void> {
         await this.powershell.dispose();

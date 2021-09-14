@@ -5,6 +5,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { getDate } from 'date-fns';
 import { QuickFixProvider } from './quickFix';
 import { updateDiagnostics, refreshDiagnosticsChange } from './diagnostic';
 import {
@@ -59,6 +60,12 @@ export async function activate(
     } else {
         log.writeError('Required modules are not installed.');
         return;
+    }
+
+    //update files on 8th of every month
+    const date = new Date();
+    if (getDate(date) == 8) {
+        await powershell.updateFiles();
     }
 
     //initialize the diagnastic collection
@@ -236,8 +243,7 @@ function checkPowershell(log: Logger): boolean {
     log.write(
         `Visual Studio Code v${vscode.version} ${procBitness}`,
         `${PackageJSON.displayName} Extension v${PackageJSON.version}`,
-        `Operating System: ${
-            OperatingSystem[platformDetails.operatingSystem]
+        `Operating System: ${OperatingSystem[platformDetails.operatingSystem]
         } ${osBitness}`
     );
     log.startNewLog('normal');
